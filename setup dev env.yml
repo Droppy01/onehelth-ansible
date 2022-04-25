@@ -1,0 +1,44 @@
+---
+ - hosts: localhost
+   name: setup neovim
+   become: yes
+   become_user: root
+
+   tasks:
+     - name: download build prerequisites
+       become: yes
+       apt:
+         pkg:
+           - ninja-build
+           - gettext
+           - libtool
+           - libtool-bin
+           - autoconf
+           - automake
+           - cmake
+           - g++
+           - pkg-config
+           - unzip
+           - curl
+           - doxygen
+           - make
+           - git
+
+     - name: get neovim source code
+       ansible.builtin.git:
+         repo: https://www.github.com/neovim/neovim.git
+         dest: /tmp/neovim
+
+     - name: build neovim
+       make:
+         chdir: /tmp/neovim
+         params: {
+            CMAKE_BUILD_TYPE: RelWithDebInfo
+            }
+
+     - name: install neovim (move to /usr/local/bin)
+       make:
+         chdir: /tmp/neovim
+         target: install
+       become: yes
+

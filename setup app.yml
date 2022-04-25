@@ -1,0 +1,86 @@
+---
+
+ - hosts: localhost
+   name: install synfony app
+   become_user: root
+   
+   tasks:
+
+     - name: install tasks dependesies
+       become: yes 
+       apt:
+         pkg:
+           - gpg
+           - python3-apt
+
+     - name: add synfony-cli apt repo
+       become: yes
+       ansible.builtin.apt_repository:
+         repo: deb [trusted=yes] https://repo.symfony.com/apt/ /
+         state: present
+         filename: symfony-cli
+
+     - name: install synfony-cli
+       become: yes
+       apt: 
+         name: symfony-cli
+         state: latest
+         update_cache: yes
+     
+     - name: install docker repo key
+       become: yes
+       apt_key:
+         url: https://download.docker.com/linux/ubuntu/gpg
+         state: present
+         keyring: /usr/share/keyrings/docker-archive-keyring.gpg
+
+     - name: add docker apt repo
+       become: yes
+       ansible.builtin.apt_repository:
+         repo: deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu   impish stable
+         state: present
+
+     - name: install docker
+       become: yes
+       apt:
+         pkg: 
+           - docker-ce
+           - docker-ce-cli
+           - containerd.io
+         state: latest
+         update_cache: yes
+
+     - name: install docker-compose from website
+       become: yes
+       get_url: 
+         url: https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
+         dest: /usr/local/bin/docker-compose
+         owner: root
+         group: root
+         mode: "u=rwx,g=rx,o=rx"
+
+     - name: install php ppa repo
+       become: yes
+       apt_repository:
+         repo: ppa:ondrej/php
+         state: present
+
+     - name: install php8 and plugins (xml & apcu)
+       become: yes
+       apt:
+         pkg: 
+           - php8.0
+           - php8.0-xml
+           - php8.0-apcu
+         state: latest
+
+     - name: get code from github
+       git:
+         repo: https://github.com/Droppy01/onehelth
+         dest: ~/projects/onehelth
+
+     - name: install composer plugins via symfony-cli
+       ansible.builtin.command: symfony composer install
+       args:
+         chdir:  ~/projects/onehelth
+
