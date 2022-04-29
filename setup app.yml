@@ -89,7 +89,7 @@
        become: yes
        copy:
          content: |
-           [unit]
+           [Unit]
            Description=docker symfony project
            Requires=Docker.service
            After=Docker.service
@@ -108,7 +108,7 @@
        become: yes
        copy:
          content: |
-           [unit]
+           [Unit]
            Description=serve symfony project
            Requires=docker-symfony-server.service
            After=docker-symfony-server.service
