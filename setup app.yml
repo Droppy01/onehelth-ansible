@@ -72,6 +72,7 @@
            - php8.0
            - php8.0-xml
            - php8.0-apcu
+           - php8.0-pgsql # PostgreSQL
          state: latest
 
      - name: get code from github
@@ -83,4 +84,47 @@
        ansible.builtin.command: symfony composer install
        args:
          chdir:  ~/projects/onehelth
+
+     - name: create docker service file
+       become: yes
+       copy:
+         content: |
+           [unit]
+           Description=docker symfony project
+           Requires=Docker.service
+           After=Docker.service
+
+           [Service]
+           ExecStart=/usr/local/bin/docker-compose --project-directory /home/a/projects/onehelth/ up
+           
+           [Install]
+           WantedBy=multi-user.target
+         dest: /etc/systemd/system/docker-symfony-server.service
+         owner: root
+         group: root
+         mode: u=rw,g=rw,o=r
+
+     - name: create service file symfony
+       become: yes
+       copy:
+         content: |
+           [unit]
+           Description=serve symfony project
+           Requires=docker-symfony-server.service
+           After=docker-symfony-server.service
+
+           [Service]
+           ExecStart=/usr/bin/symfony local:server:start --dir=/home/a/projects/onehelth/
+           
+           [Install]
+           WantedBy=multi-user.target
+         dest: /etc/systemd/system/symfony-server.service
+         owner: root
+         group: root
+         mode: u=rw,g=rw,o=r
+
+     - name: reload systemd
+       become: yes
+       command: systemctl daemon-reload
+                 
 
