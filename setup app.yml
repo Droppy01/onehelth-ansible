@@ -5,7 +5,6 @@
    become_user: root
    
    tasks:
-
      - name: install tasks dependesies
        become: yes 
        apt:
@@ -75,15 +74,36 @@
            - php8.0-pgsql # PostgreSQL
          state: latest
 
+     - name: create project user (symfony)
+       become: yes
+       ansible.builtin.user:
+         name: symfony
+         shell: /bin/bash
+         groups: docker,sourceCode
+         append: yes
+
+     - name: create code dir
+       become: yes
+       file: 
+          path: /usr/local/src/onehelth
+          mode: u=rwx,g=rwS,o=
+          user: symfony
+          group: sourceCode
+          state: directory
+
      - name: get code from github
+       become: yes
+       become_user: symfony
        git:
          repo: https://github.com/Droppy01/onehelth
-         dest: ~/projects/onehelth
+         dest: /usr/local/src/onehelth
 
      - name: install composer plugins via symfony-cli
+       become: yes
+       become_user: symfony
        ansible.builtin.command: symfony composer install
        args:
-         chdir:  ~/projects/onehelth
+         chdir:  /usr/local/src/onehelth/
 
      - name: create docker service file
        become: yes
@@ -91,11 +111,13 @@
          content: |
            [Unit]
            Description=docker symfony project
-           Requires=Docker.service
-           After=Docker.service
+           Requires=docker.service
+           After=docker.service
 
            [Service]
-           ExecStart=/usr/local/bin/docker-compose --project-directory /home/a/projects/onehelth/ up
+           User=symfony
+           Group=docker,sourceCode
+           ExecStart=/usr/local/bin/docker-compose --project-directory /usr/local/src/onehelth/ up
            
            [Install]
            WantedBy=multi-user.target
@@ -114,7 +136,9 @@
            After=docker-symfony-server.service
 
            [Service]
-           ExecStart=/usr/bin/symfony local:server:start --dir=/home/a/projects/onehelth/
+           User=symfony
+           Group=sourceCode
+           ExecStart=/usr/bin/symfony local:server:start --dir=/usr/local/src/onehelth/
            
            [Install]
            WantedBy=multi-user.target
