@@ -74,6 +74,11 @@
            - php8.0-pgsql # PostgreSQL
          state: latest
 
+     - name: add sourceCode group
+       ansible.builtin.group:
+         name: somegroup
+         state: present
+
      - name: create project user (symfony)
        become: yes
        ansible.builtin.user:
