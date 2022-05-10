@@ -75,8 +75,9 @@
          state: latest
 
      - name: add sourceCode group
+       become: yes
        ansible.builtin.group:
-         name: somegroup
+         name: sourceCode
          state: present
 
      - name: create project user (symfony)
@@ -91,8 +92,8 @@
        become: yes
        file: 
           path: /usr/local/src/onehelth
-          mode: u=rwx,g=rwS,o=
-          user: symfony
+          mode: u=rwx,g=rwx,o=
+          owner: symfony
           group: sourceCode
           state: directory
 
@@ -121,7 +122,6 @@
 
            [Service]
            User=symfony
-           Group=docker,sourceCode
            ExecStart=/usr/local/bin/docker-compose --project-directory /usr/local/src/onehelth/ up
            
            [Install]
@@ -142,7 +142,6 @@
 
            [Service]
            User=symfony
-           Group=sourceCode
            ExecStart=/usr/bin/symfony local:server:start --dir=/usr/local/src/onehelth/
            
            [Install]
